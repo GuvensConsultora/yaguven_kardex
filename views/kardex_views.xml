@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================= -->
+    <!-- Wizard: formulario de filtros                                      -->
+    <!-- ================================================================= -->
+    <record id="view_kardex_wizard_form" model="ir.ui.view">
+        <field name="name">yaguven.kardex.wizard.form</field>
+        <field name="model">yaguven.kardex.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reporte Kardex">
+                <group>
+                    <group string="Período">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="company_id"
+                               groups="base.group_multi_company"/>
+                    </group>
+                    <group string="Filtros">
+                        <field name="location_id"/>
+                        <field name="product_ids"
+                               widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="category_id"/>
+                        <field name="lot_id"/>
+                        <field name="include_zero"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_view_kardex"
+                            string="Ver Kardex"
+                            type="object"
+                            class="btn-primary"/>
+                    <button name="action_export_excel"
+                            string="Exportar Excel"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button string="Cancelar"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- Líneas del Kardex: vista list                                      -->
+    <!-- decoration-bf: saldo inicial en negrita                            -->
+    <!-- decoration-danger: saldo negativo en rojo                          -->
+    <!-- ================================================================= -->
+    <record id="view_kardex_line_list" model="ir.ui.view">
+        <field name="name">yaguven.kardex.line.list</field>
+        <field name="model">yaguven.kardex.line</field>
+        <field name="arch" type="xml">
+            <list decoration-bf="is_opening"
+                  decoration-danger="balance &lt; 0 and not is_opening"
+                  create="false" edit="false" delete="false">
+                <field name="is_opening" column_invisible="True"/>
+                <field name="wizard_id" column_invisible="True"/>
+                <field name="date" widget="date"/>
+                <field name="move_type" optional="hide"/>
+                <field name="product_id"/>
+                <field name="reference"/>
+                <field name="origin" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="lot_id" optional="show"/>
+                <field name="location_src_id" optional="hide"/>
+                <field name="location_dest_id" optional="hide"/>
+                <field name="qty_in" sum="Total Entradas"/>
+                <field name="qty_out" sum="Total Salidas"/>
+                <field name="balance"/>
+                <field name="product_uom_id" string="UdM"/>
+                <button name="action_open_picking"
+                        type="object"
+                        icon="fa-external-link"
+                        title="Abrir transferencia"
+                        invisible="not picking_id"/>
+                <field name="picking_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- Líneas del Kardex: vista search                                    -->
+    <!-- ================================================================= -->
+    <record id="view_kardex_line_search" model="ir.ui.view">
+        <field name="name">yaguven.kardex.line.search</field>
+        <field name="model">yaguven.kardex.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id"/>
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="lot_id"/>
+                <field name="origin"/>
+                <separator/>
+                <filter name="type_in"
+                        string="Entradas"
+                        domain="[('move_type', '=', 'in')]"/>
+                <filter name="type_out"
+                        string="Salidas"
+                        domain="[('move_type', '=', 'out')]"/>
+                <separator/>
+                <filter name="group_product"
+                        string="Producto"
+                        context="{'group_by': 'product_id'}"/>
+                <filter name="group_partner"
+                        string="Contacto"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_lot"
+                        string="Lote"
+                        context="{'group_by': 'lot_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- Acción: abre el wizard                                             -->
+    <!-- ================================================================= -->
+    <record id="action_kardex_wizard" model="ir.actions.act_window">
+        <field name="name">Kardex</field>
+        <field name="res_model">yaguven.kardex.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- Menú: Inventario → Reportes → Kardex                              -->
+    <!-- ================================================================= -->
+    <menuitem
+        id="menu_kardex_report"
+        name="Kardex"
+        parent="stock.menu_warehouse_report"
+        action="action_kardex_wizard"
+        sequence="99"/>
+
+</odoo>
