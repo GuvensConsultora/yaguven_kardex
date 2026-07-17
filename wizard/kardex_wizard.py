@@ -549,6 +549,10 @@ class YaguvenKardexLine(models.TransientModel):
     )
     balance = fields.Float(
         string='Saldo', digits='Product Unit of Measure',
+        # Es un saldo CORRIENTE (running balance), no un total: agruparlo por
+        # producto no debe sumar todas las líneas (da un número sin sentido,
+        # ej. 65 en vez del saldo real 0). Hallazgo 2026-07-17.
+        aggregator=None,
     )
     product_uom_id = fields.Many2one('uom.uom', string='UdM')
 
