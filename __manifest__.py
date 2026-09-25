@@ -1,6 +1,6 @@
 {
     'name': 'Yagüven - Kardex',
-    'version': '19.0.1.0.1',
+    'version': '20.0.1.0.1',
     'summary': 'Reporte Kardex de inventario con saldo acumulado',
     'description': """
 Reporte Kardex accesible desde Inventario -> Reportes -> Kardex: saldo inicial + movimientos
@@ -17,7 +17,7 @@ eliminó en 19).
     'license': 'LGPL-3',
     'depends': ['stock'],
     'data': [
-        'security/ir.model.access.csv',
+        'security/ir.access.csv',
         'views/kardex_views.xml',
     ],
     'installable': True,

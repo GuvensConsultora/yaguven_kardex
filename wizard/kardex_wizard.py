@@ -1,5 +1,4 @@
 import io
-import base64
 from datetime import datetime, timedelta
 
 from odoo import models, fields, _
@@ -120,7 +119,7 @@ class YaguvenKardexWizard(models.TransientModel):
         attachment = self.env['ir.attachment'].create({
             'name': filename,
             'type': 'binary',
-            'datas': base64.b64encode(output.getvalue()),
+            'raw': output.getvalue(),
             'mimetype': (
                 'application/vnd.openxmlformats-officedocument'
                 '.spreadsheetml.sheet'
@@ -366,7 +365,7 @@ class YaguvenKardexWizard(models.TransientModel):
                 sml.location_id,
                 sml.location_dest_id,
                 sml.quantity AS qty,
-                sml.product_uom_id,
+                sml.uom_id AS product_uom_id,
                 sm.reference,
                 sm.origin,
                 sm.picking_id,
