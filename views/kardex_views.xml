@@ -72,7 +72,7 @@
                 <field name="product_uom_id" string="UdM"/>
                 <button name="action_open_picking"
                         type="object"
-                        icon="fa-external-link"
+                        icon="open_in_new"
                         title="Abrir transferencia"
                         invisible="not picking_id"/>
                 <field name="picking_id" column_invisible="True"/>

@@ -1,6 +1,6 @@
 {
     'name': 'Yagüven - Kardex',
-    'version': '20.0.1.0.1',
+    'version': '20.0.1.0.2',
     'summary': 'Reporte Kardex de inventario con saldo acumulado',
     'description': """
 Reporte Kardex accesible desde Inventario -> Reportes -> Kardex: saldo inicial + movimientos
