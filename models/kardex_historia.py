@@ -40,9 +40,9 @@ class KardexHistoria(models.Model):
     @api.model
     def corte(self):
         """Fecha-hora del corte, o False si no hay historia cargada."""
-        valor = self.env['ir.config_parameter'].sudo().get_param(PARAM_CORTE)
+        valor = self.env['ir.config_parameter'].sudo().get_str(PARAM_CORTE)  # O20: get_param pasó a get_str
         return fields.Datetime.to_datetime(valor) if valor else False
 
     @api.model
     def referencia_excluida(self):
-        return self.env['ir.config_parameter'].sudo().get_param(PARAM_EXCLUIR) or ''
+        return self.env['ir.config_parameter'].sudo().get_str(PARAM_EXCLUIR)
