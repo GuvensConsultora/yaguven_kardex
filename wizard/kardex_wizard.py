@@ -245,6 +245,40 @@ class YaguvenKardexWizard(models.TransientModel):
     # Queries SQL
     # -------------------------------------------------------------------------
 
+    def _fuente_sql(self, params):
+        """Subconsulta con los movimientos que lee el Kardex (columnas de stock_move_line).
+
+        Sin historia cargada: los movimientos hechos de la 20, como siempre. Con historia
+        (yaguven.kardex.historia + corte): antes del corte manda la historia de Odoo 17; después,
+        los movimientos de la 20 sin los de la carga inicial (`excluir_referencia`), que la
+        historia ya explica. Los renglones de historia llevan id negativo y sin lote ni picking.
+        """
+        Historia = self.env['yaguven.kardex.historia']
+        corte = Historia.corte()
+        reales = """
+            SELECT sml.id, sml.date, sml.product_id, sml.lot_id, sml.location_id,
+                   sml.location_dest_id, sml.quantity, sml.uom_id, sm.reference, sm.origin,
+                   sm.picking_id, sp.partner_id, sm.company_id
+            FROM stock_move_line sml
+            JOIN stock_move sm ON sm.id = sml.move_id
+            LEFT JOIN stock_picking sp ON sp.id = sm.picking_id
+            WHERE sm.state = 'done'
+        """
+        if not corte:
+            return reales
+        params['corte'] = corte
+        params['excluir'] = Historia.referencia_excluida()
+        return reales + """
+                AND sml.date >= %(corte)s
+                AND COALESCE(sm.reference, '') <> %(excluir)s
+            UNION ALL
+            SELECT -h.id, h.date, h.product_id, NULL::integer, h.location_id,
+                   h.location_dest_id, h.quantity, h.uom_id, h.reference, h.origin,
+                   NULL::integer, h.partner_id, h.company_id
+            FROM yaguven_kardex_historia h
+            WHERE h.date < %(corte)s
+        """
+
     def _resolve_product_ids(self, location_ids):
         """Determina qué productos incluir según los filtros del wizard.
         Por qué SQL directo cuando no hay filtro: evita traer TODOS los
@@ -275,12 +309,11 @@ class YaguvenKardexWizard(models.TransientModel):
             lot_clause = "AND sml.lot_id = %(lot_id)s"
             params['lot_id'] = self.lot_id.id
 
+        fuente = self._fuente_sql(params)
         query = f"""
             SELECT DISTINCT sml.product_id
-            FROM stock_move_line sml
-            JOIN stock_move sm ON sm.id = sml.move_id
-            WHERE sm.state = 'done'
-                AND sm.company_id = %(company_id)s
+            FROM ({fuente}) sml
+            WHERE sml.company_id = %(company_id)s
                 AND sml.date < %(date_to)s
                 AND (sml.location_id = ANY(%(locs)s)
                      OR sml.location_dest_id = ANY(%(locs)s))
@@ -306,6 +339,7 @@ class YaguvenKardexWizard(models.TransientModel):
             lot_clause = "AND sml.lot_id = %(lot_id)s"
             params['lot_id'] = self.lot_id.id
 
+        fuente = self._fuente_sql(params)
         query = f"""
             SELECT
                 sml.product_id,
@@ -318,10 +352,8 @@ class YaguvenKardexWizard(models.TransientModel):
                     THEN -sml.quantity
                     ELSE 0
                 END) AS balance
-            FROM stock_move_line sml
-            JOIN stock_move sm ON sm.id = sml.move_id
-            WHERE sm.state = 'done'
-                AND sm.company_id = %(company_id)s
+            FROM ({fuente}) sml
+            WHERE sml.company_id = %(company_id)s
                 AND sml.date < %(date_from)s
                 AND sml.product_id = ANY(%(products)s)
                 AND (sml.location_id = ANY(%(locs)s)
@@ -356,6 +388,7 @@ class YaguvenKardexWizard(models.TransientModel):
             lot_clause = "AND sml.lot_id = %(lot_id)s"
             params['lot_id'] = self.lot_id.id
 
+        fuente = self._fuente_sql(params)
         query = f"""
             SELECT
                 sml.id AS move_line_id,
@@ -366,15 +399,12 @@ class YaguvenKardexWizard(models.TransientModel):
                 sml.location_dest_id,
                 sml.quantity AS qty,
                 sml.uom_id AS product_uom_id,
-                sm.reference,
-                sm.origin,
-                sm.picking_id,
-                sp.partner_id
-            FROM stock_move_line sml
-            JOIN stock_move sm ON sm.id = sml.move_id
-            LEFT JOIN stock_picking sp ON sp.id = sm.picking_id
-            WHERE sm.state = 'done'
-                AND sm.company_id = %(company_id)s
+                sml.reference,
+                sml.origin,
+                sml.picking_id,
+                sml.partner_id
+            FROM ({fuente}) sml
+            WHERE sml.company_id = %(company_id)s
                 AND sml.date >= %(date_from)s
                 AND sml.date < %(date_to)s
                 AND sml.product_id = ANY(%(products)s)

@@ -1,3 +1,5 @@
 id,name,model_id,group_id/id,operation,domain
 access_kardex_wizard_user,yaguven.kardex.wizard user,yaguven.kardex.wizard,stock.group_stock_user,crud,
 access_kardex_line_user,yaguven.kardex.line user,yaguven.kardex.line,stock.group_stock_user,crud,
+access_kardex_historia_user,yaguven.kardex.historia user,yaguven.kardex.historia,stock.group_stock_user,r,
+access_kardex_historia_system,yaguven.kardex.historia system,yaguven.kardex.historia,base.group_system,crud,
